@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- ホームページタイトルを「FooZoo」のみに -->
     <title>FooZoo</title>
 
-    <!-- LINEなどで共有したときの見え方の設定（ご指摘の部分を修正しました） -->
     <meta property="og:title" content="🗾全国の動物園メモ🐘">
     <meta property="og:description" content="FooZoo">
     <meta property="og:type" content="website">
@@ -97,18 +95,31 @@
         .form-group input[type="text"], .form-group input[type="date"], .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; -webkit-appearance: none; }
         .save-btn { background-color: var(--ikea-blue); color: white; border: none; width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; box-sizing: border-box; }
         #debug-error { color: red; background: #fff0f0; border: 1px solid red; padding: 15px; margin: 20px; border-radius: 8px; font-size: 14px; display: none; white-space: pre-wrap; }
+        
+        /* ローディング画面のスタイル */
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-weight:bold; color:var(--ikea-blue); }
+        .spinner { width: 50px; height: 50px; border: 5px solid #css; border-top: 5px solid var(--ikea-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loading-text">データを読み込み中...</div>
+</div>
+
 <script>
+    // ⚠️重要：ステップ1で取得したご自身のデプロイURLをここに貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzGz19d3V3tuN5vTCIM1cd8UiDqmNtnfXyoyuvdbxyHqfPYsDKjmuOY3yNOT9aJPuNs/exec";
+
     (function() {
         const password = prompt("パスワードを入力してください：");
         if (password === "0220") {
             document.body.style.display = "block";
         } else {
             alert("パスワードが違います。アクセスできません。");
-            document.write('<h1 style="text-align:center; margin-top:50px; color:#333; font-family:sans-serif;">🔒 アクセス権限がありません。</h1><p style="text-align:center; color:#666;">ページを再読み込みして正しいパスワードを入力してください。</p>');
+            document.write('<h1 style="text-align:center; margin-top:50px; color:#333; font-family:sans-serif;">🔒 アクセス権限がありません。</h1>');
         }
     })();
 </script>
@@ -169,8 +180,9 @@
         const debugDiv = document.getElementById('debug-error');
         if (debugDiv) {
             debugDiv.style.display = 'block';
-            debugDiv.innerText = `【JavaScriptエラー発生】\nエラー内容: ${message}\n行番号: ${lineno}行目`;
+            debugDiv.innerText = `【エラー発生】\n${message}\n${lineno}行目`;
         }
+        showLoading(false);
         return false;
     };
 
@@ -235,7 +247,7 @@
         { id: 58, name: "日本モンキーパーク（日本モンキーセンター）", type: "zoo", region: "中部", location: "愛知県犬山市" },
         { id: 59, name: "京都市動物園", type: "zoo", region: "近畿", location: "京都府京都市" },
         { id: 60, name: "ごかつら池どうぶつパーク", type: "zoo", region: "近畿", location: "三重県多気町" },
-        { id: 61, name: "和歌山城公園動物園", type: "zoo", region: "近畿", location: "バンダ、アドベンチャーワールド" },
+        { id: 61, name: "和歌山城公園動物園", type: "zoo", region: "近畿", location: "和歌山県和歌山市" },
         { id: 62, name: "アドベンチャーワールド", type: "zoo", region: "近畿", location: "和歌山県白浜町" },
         { id: 63, name: "天王寺動物園", type: "zoo", region: "近畿", location: "大阪府大阪市" },
         { id: 64, name: "五月山動物園", type: "zoo", region: "近畿", location: "大阪府池田市" },
@@ -290,19 +302,65 @@
     let currentSelectedSpotId = null;
     let selectedStatus = "none";
     let oshiCounter = 0;
-
     let userRecords = {};
-    try {
-        userRecords = JSON.parse(localStorage.getItem('foozoo_records_v4')) || {};
-    } catch(e) {
-        console.error("LocalStorageの読み込みに失敗しました", e);
-    }
 
     window.onload = function() {
         renderFilterButtons();
-        renderSpotList();
-        updateProgressBar();
+        loadDataFromGAS(); // 初回起動時にスプレッドシートから読み込み
     };
+
+    function showLoading(show, text = "データを読み込み中...") {
+        const overlay = document.getElementById('loading-overlay');
+        document.getElementById('loading-text').innerText = text;
+        overlay.style.display = show ? 'flex' : 'none';
+    }
+
+    // 🔄 データベース（GAS）からデータを読み込む処理
+    function loadDataFromGAS() {
+        showLoading(true, "スプレッドシートからデータを取得中...");
+        fetch(GAS_URL)
+            .then(res => res.json())
+            .then(data => {
+                userRecords = data || {};
+                renderSpotList();
+                updateProgressBar();
+                showLoading(false);
+            })
+            .catch(err => {
+                console.error("データの取得に失敗しました", err);
+                // 失敗した場合は緊急避難的にスマホ内のLocalStorageを使う
+                userRecords = JSON.parse(localStorage.getItem('foozoo_records_v4')) || {};
+                renderSpotList();
+                updateProgressBar();
+                showLoading(false);
+            });
+    }
+
+    // 💾 データベース（GAS）にデータを保存する処理
+    function saveDataToGAS() {
+        showLoading(true, "データを保存中...");
+        fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify(userRecords),
+            headers: { 'Content-Type': 'text/plain' } // CORS回避のため敢えてtext/plain
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.status === "success") {
+                // バックアップとしてスマホ内にも保存
+                localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+            } else {
+                alert("保存時にエラーが発生しました: " + res.message);
+            }
+            showLoading(false);
+        })
+        .catch(err => {
+            console.error("データの保存に失敗しました", err);
+            alert("通信エラーのためスプレッドシートに保存できませんでした。スマホ内には仮保存しました。");
+            localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+            showLoading(false);
+        });
+    }
 
     function renderFilterButtons() {
         const container = document.getElementById('filterContainer');
@@ -489,10 +547,14 @@
         if (selectedStatus === "none" && (date || memo || oshisDataCollected.length > 0)) {
             userRecords[id].status = "wantto";
         }
-        localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+        
+        // ローカルでの画面更新
         updateProgressBar();
         renderSpotList();
         closeModal();
+
+        // 💾 スプレッドシートに送信して保存！
+        saveDataToGAS();
     }
 
     function escapeHtml(str) {
