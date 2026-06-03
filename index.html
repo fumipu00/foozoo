@@ -52,11 +52,11 @@
         .spot-card.visited { background-color: var(--status-visited); }
         .spot-card.wantto { background-color: var(--status-wantto); }
         .spot-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
-        .spot-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-right: 40px; }
+        .spot-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .spot-name { font-weight: bold; font-size: 16px; }
         
-        /* 🗺️ MAPボタンのスタイル */
-        .map-link { background-color: #e6f2ff; color: var(--ikea-blue); font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; border: 1px solid #b3d7ff; }
+        /* 🗺️ MAPボタンのスタイル（タグ群に馴染むように調整） */
+        .map-link { background-color: #e6f2ff; color: var(--ikea-blue); font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; border: 1px solid #b3d7ff; height: 16px; box-sizing: border-box; }
         .map-link:active { background-color: #b3d7ff; }
 
         .status-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
@@ -69,11 +69,12 @@
         .oshi-info.female { color: var(--gender-female); }
         .oshi-info.none { color: #555555; }
         
-        /* 📸 ホーム画面用の複数画像サムネイル（写真全体が見える：contain） */
+        /* 📸 ホーム画面用の複数画像サムネイル */
         .home-image-gallery { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
         .home-spot-thumbnail { width: 60px; height: 60px; object-fit: contain; border-radius: 4px; background: #eee; border: 1px solid #ddd; }
 
-        .spot-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        /* タグ表示エリアのレイアウト調整 */
+        .spot-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
         .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
         .tag.reg-hokkaido { background-color: var(--color-hokkaido); }
         .tag.reg-tohoku { background-color: var(--color-tohoku); }
@@ -109,7 +110,7 @@
         
         .form-group input[type="text"], .form-group input[type="date"], .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; -webkit-appearance: none; min-height: 38px; }
         
-        /* 📸 詳細画面：中サイズサムネイルのギャラリー（写真全体が見える：contain） */
+        /* 📸 詳細画面：中サイズサムネイルのギャラリー */
         .modal-image-gallery { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
         .modal-image-container { position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; background: #eee; border: 1px solid #ccc; cursor: pointer; }
         .modal-image-container img { width: 100%; height: 100%; object-fit: contain; }
@@ -176,7 +177,7 @@
 
 <div class="modal" id="detailModal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <span class="close-btn" onclick="closeModal()">×</span>
         <h2 id="modalSpotName" class="modal-title">施設名</h2>
         <div id="modalSpotTags"></div>
         <div class="form-group">
@@ -215,7 +216,7 @@
 </div>
 
 <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
-    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+    <span class="lightbox-close" onclick="closeLightbox()">×</span>
     <img class="lightbox-content" id="lightboxImage" src="" alt="拡大画像">
 </div>
 
@@ -347,7 +348,7 @@
     let selectedStatus = "none";
     let oshiCounter = 0;
     let userRecords = {};
-    let tempImagesArray = []; // 編集中の複数Base64画像を一時保持
+    let tempImagesArray = []; 
 
     window.onload = function() {
         renderFilterButtons();
@@ -475,17 +476,16 @@
                 oshisHtml = `<div class="oshi-list-home">${itemsHtml}</div>`;
             }
 
-            // 🗺️ MAP検索用リンク（タップイベントの伝播を防止して安全に遷移）
+            // 【微調整】MAP検索用ボタン
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`;
             const mapButtonHtml = `<a href="${mapUrl}" target="_blank" class="map-link" onclick="event.stopPropagation();">MAP</a>`;
 
-            // 📸 ホーム画面用の写真全体（contain）複数枚ミニサムネイル表示
             let imgGalleryHtml = "";
             let imagesList = [];
             if (record.images && Array.isArray(record.images)) {
                 imagesList = record.images;
             } else if (record.image) {
-                imagesList = [record.image]; // 旧バージョン互換用
+                imagesList = [record.image];
             }
 
             if (imagesList.length > 0) {
@@ -503,12 +503,12 @@
                 <div class="spot-left">
                     <div class="spot-name-row">
                         <span class="spot-name">${spot.name}</span>
-                        ${mapButtonHtml}
                         ${statusHtml}
                     </div>
                     <div class="spot-tags">
                         <span class="tag ${regionClass}">${spot.region}</span>
                         ${locationHtml}
+                        ${mapButtonHtml}
                     </div>
                     ${oshisHtml}
                     ${imgGalleryHtml}
@@ -557,7 +557,6 @@
         container.appendChild(itemDiv);
     }
 
-    // 📸 画像追加時の圧縮＆複数追加処理（上限5枚）
     function handleImageSelected(input) {
         if (tempImagesArray.length >= 5) {
             alert("写真は最大5枚まで保存可能です。");
@@ -574,7 +573,6 @@
         reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
-                // 容量確保のため長辺最大600pxに最適化リサイズ
                 const maxSide = 600;
                 let width = img.width;
                 let height = img.height;
@@ -599,7 +597,7 @@
                 tempImagesArray.push(base64Img);
                 
                 renderModalImages();
-                input.value = ""; // 連続選択可能にするためリセット
+                input.value = ""; 
                 showLoading(false);
             };
             img.src = e.target.result;
@@ -607,7 +605,6 @@
         reader.readAsDataURL(file);
     }
 
-    // 📸 詳細画面モーダル内の中サイズサムネイル描写（タップで拡大表示イベント設置）
     function renderModalImages() {
         const gallery = document.getElementById('modalImageGallery');
         if (!gallery) return;
@@ -625,13 +622,11 @@
         });
     }
 
-    // 画像個別削除
     function removeModalImage(index) {
         tempImagesArray.splice(index, 1);
         renderModalImages();
     }
 
-    // 🔍 写真をアップ（拡大）で見るモーダル処理
     function openLightbox(imgSrc) {
         document.getElementById('lightboxImage').src = imgSrc;
         document.getElementById('lightboxModal').style.display = 'flex';
@@ -656,12 +651,9 @@
         `;
         setStatus(record.status || "none");
         
-        // 日付入力
         document.getElementById('visitDate').value = record.date || "";
-
         document.getElementById('visitMemo').value = record.memo || "";
         
-        // 📸 複数写真データの一時配列読み込み（旧データ互換つき）
         if (record.images && Array.isArray(record.images)) {
             tempImagesArray = [...record.images];
         } else if (record.image) {
@@ -705,7 +697,6 @@
         const date = document.getElementById('visitDate').value;
         const memo = document.getElementById('visitMemo').value.trim();
         
-        // 📸 複数枚対応版オブジェクトとして保存
         userRecords[id] = { 
             status: selectedStatus, 
             date: date, 
@@ -727,7 +718,7 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        return str.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
     }
 </script>
 </body>
