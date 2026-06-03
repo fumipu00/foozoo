@@ -98,7 +98,7 @@
         
         /* ローディング画面のスタイル */
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-weight:bold; color:var(--ikea-blue); }
-        .spinner { width: 50px; height: 50px; border: 5px solid #css; border-top: 5px solid var(--ikea-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #eee; border-top: 5px solid var(--ikea-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -110,7 +110,7 @@
 </div>
 
 <script>
-    // ⚠️重要：ステップ1で取得したご自身のデプロイURLをここに貼り付けてください
+    // いただいたデプロイURLを設定済みです
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzGz19d3V3tuN5vTCIM1cd8UiDqmNtnfXyoyuvdbxyHqfPYsDKjmuOY3yNOT9aJPuNs/exec";
 
     (function() {
@@ -306,7 +306,7 @@
 
     window.onload = function() {
         renderFilterButtons();
-        loadDataFromGAS(); // 初回起動時にスプレッドシートから読み込み
+        loadDataFromGAS(); 
     };
 
     function showLoading(show, text = "データを読み込み中...") {
@@ -315,7 +315,6 @@
         overlay.style.display = show ? 'flex' : 'none';
     }
 
-    // 🔄 データベース（GAS）からデータを読み込む処理
     function loadDataFromGAS() {
         showLoading(true, "スプレッドシートからデータを取得中...");
         fetch(GAS_URL)
@@ -328,7 +327,6 @@
             })
             .catch(err => {
                 console.error("データの取得に失敗しました", err);
-                // 失敗した場合は緊急避難的にスマホ内のLocalStorageを使う
                 userRecords = JSON.parse(localStorage.getItem('foozoo_records_v4')) || {};
                 renderSpotList();
                 updateProgressBar();
@@ -336,18 +334,16 @@
             });
     }
 
-    // 💾 データベース（GAS）にデータを保存する処理
     function saveDataToGAS() {
         showLoading(true, "データを保存中...");
         fetch(GAS_URL, {
             method: 'POST',
             body: JSON.stringify(userRecords),
-            headers: { 'Content-Type': 'text/plain' } // CORS回避のため敢えてtext/plain
+            headers: { 'Content-Type': 'text/plain' } 
         })
         .then(res => res.json())
         .then(res => {
             if (res.status === "success") {
-                // バックアップとしてスマホ内にも保存
                 localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
             } else {
                 alert("保存時にエラーが発生しました: " + res.message);
@@ -548,12 +544,10 @@
             userRecords[id].status = "wantto";
         }
         
-        // ローカルでの画面更新
         updateProgressBar();
         renderSpotList();
         closeModal();
 
-        // 💾 スプレッドシートに送信して保存！
         saveDataToGAS();
     }
 
