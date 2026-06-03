@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FooZoo - 推しアニマルいっぱい記録帳</title>
+    
+    <title>FooZoo</title>
+
+    <meta property="og:title" content="🗾全国の動物園メモ🐘">
+    <meta property="og:description" content="FooZoo - 推しアニマルいっぱい記録帳">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="🗾全国の動物園メモ🐘">
+
     <style>
         :root {
             --ikea-blue: #0051ba;
@@ -25,7 +33,6 @@
             --color-shikoku: #ff8b94;
             --color-kyushu: #7da87b;
         }
-        /* 初期状態では中身を非表示にする（パスワード成功後に表示） */
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: none; }
         header { background-color: var(--ikea-blue); color: white; padding: 20px; text-align: center; }
         header h1 { margin: 0; font-size: 28px; font-weight: 900; }
@@ -94,13 +101,10 @@
 
 <script>
     (function() {
-        // パスワード入力プロンプトを表示
         const password = prompt("パスワードを入力してください：");
         if (password === "0220") {
-            // パスワードが合っていれば画面を表示
             document.body.style.display = "block";
         } else {
-            // 間違っていたら警告を出して真っ白な画面にする
             alert("パスワードが違います。アクセスできません。");
             document.write('<h1 style="text-align:center; margin-top:50px; color:#333; font-family:sans-serif;">🔒 アクセス権限がありません。</h1><p style="text-align:center; color:#666;">ページを再読み込みして正しいパスワードを入力してください。</p>');
         }
@@ -216,7 +220,7 @@
         { id: 45, name: "大町山岳博物館", type: "zoo", region: "中部", location: "長野県大町市" },
         { id: 46, name: "楽寿園", type: "zoo", region: "中部", location: "静岡県三島市" },
         { id: 47, name: "富士サファリパーク", type: "zoo", region: "中部", location: "静岡県裾野市" },
-        { id: 48, name: "伊豆アニマルキングダム", type: "zoo", region: "中部", location: "静岡県東アイランド町" },
+        { id: 48, name: "伊豆アニマルキングダム", type: "zoo", region: "中部", location: "静岡県東伊豆町" },
         { id: 49, name: "伊豆シャボテン動物公園", type: "zoo", region: "中部", location: "静岡県伊東市" },
         { id: 50, name: "熱川バナナワニ園", type: "zoo", region: "中部", location: "静岡県東伊豆町" },
         { id: 51, name: "日本平動物園", type: "zoo", region: "中部", location: "静岡県静岡市" },
@@ -229,7 +233,7 @@
         { id: 58, name: "日本モンキーパーク（日本モンキーセンター）", type: "zoo", region: "中部", location: "愛知県犬山市" },
         { id: 59, name: "京都市動物園", type: "zoo", region: "近畿", location: "京都府京都市" },
         { id: 60, name: "ごかつら池どうぶつパーク", type: "zoo", region: "近畿", location: "三重県多気町" },
-        { id: 61, name: "和歌山城公園動物園", type: "zoo", region: "近畿", location: "和歌山県和歌山市" },
+        { id: 61, name: "和歌山城公園動物園", type: "zoo", region: "近畿", location: "バンダ、アドベンチャーワールド" },
         { id: 62, name: "アドベンチャーワールド", type: "zoo", region: "近畿", location: "和歌山県白浜町" },
         { id: 63, name: "天王寺動物園", type: "zoo", region: "近畿", location: "大阪府大阪市" },
         { id: 64, name: "五月山動物園", type: "zoo", region: "近畿", location: "大阪府池田市" },
