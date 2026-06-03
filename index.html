@@ -46,12 +46,19 @@
         .filter-btn { background: #e0e0e0; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; }
         .filter-btn.active { background: var(--ikea-blue); color: white; }
         .spot-list { display: flex; flex-direction: column; gap: 12px; }
-        .spot-card { background: var(--card-bg); padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        
+        /* ホーム画面カード */
+        .spot-card { background: var(--card-bg); padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; position: relative; }
         .spot-card.visited { background-color: var(--status-visited); }
         .spot-card.wantto { background-color: var(--status-wantto); }
         .spot-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
-        .spot-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .spot-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-right: 40px; }
         .spot-name { font-weight: bold; font-size: 16px; }
+        
+        /* 🗺️ MAPボタンのスタイル */
+        .map-link { background-color: #e6f2ff; color: var(--ikea-blue); font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; border: 1px solid #b3d7ff; }
+        .map-link:active { background-color: #b3d7ff; }
+
         .status-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
         .status-badge.visited { background-color: #dcb100; color: white; }
         .status-badge.wantto { background-color: #ffffff; color: var(--ikea-blue); border: 1px solid var(--ikea-blue); }
@@ -61,6 +68,11 @@
         .oshi-info.male { color: var(--gender-male); }
         .oshi-info.female { color: var(--gender-female); }
         .oshi-info.none { color: #555555; }
+        
+        /* 📸 ホーム画面用の複数画像サムネイル（写真全体が見える：contain） */
+        .home-image-gallery { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .home-spot-thumbnail { width: 60px; height: 60px; object-fit: contain; border-radius: 4px; background: #eee; border: 1px solid #ddd; }
+
         .spot-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
         .tag.reg-hokkaido { background-color: var(--color-hokkaido); }
@@ -74,6 +86,8 @@
         .tag.reg-kyushu { background-color: var(--color-kyushu); }
         .location-text { font-size: 12px; color: #555555; font-weight: bold; }
         .chevron { color: #ccc; font-size: 18px; padding-left: 10px; }
+        
+        /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 16px; box-sizing: border-box; }
         .modal-content { background: var(--card-bg); padding: 20px; border-radius: 12px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
         .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #999; }
@@ -92,11 +106,27 @@
         .gender-group label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .remove-oshi-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #cc0000; cursor: pointer; font-size: 12px; font-weight: bold; }
         .add-oshi-btn { background: #ffffff; color: #b38600; border: 1px dashed var(--ikea-yellow); width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; box-sizing: border-box; }
-        .form-group input[type="text"], .form-group input[type="date"], .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; -webkit-appearance: none; }
+        
+        .form-group input[type="text"], .form-group input[type="date"], .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; -webkit-appearance: none; min-height: 38px; }
+        
+        /* 📸 詳細画面：中サイズサムネイルのギャラリー（写真全体が見える：contain） */
+        .modal-image-gallery { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+        .modal-image-container { position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; background: #eee; border: 1px solid #ccc; cursor: pointer; }
+        .modal-image-container img { width: 100%; height: 100%; object-fit: contain; }
+        .modal-image-container .delete-img-btn { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .file-input-label { background: #ffffff; color: var(--ikea-blue); border: 1px solid var(--ikea-blue); padding: 8px; border-radius: 6px; text-align: center; cursor: pointer; font-weight: bold; font-size: 14px; display: block; }
+        .file-input-label:active { background: #f0f6ff; }
+        input[type="file"] { display: none; }
+
+        /* 🔍 写真拡大モーダル */
+        .lightbox-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 2000; padding: 10px; box-sizing: border-box; }
+        .lightbox-content { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+        .lightbox-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 30px; cursor: pointer; font-weight: bold; }
+
         .save-btn { background-color: var(--ikea-blue); color: white; border: none; width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; box-sizing: border-box; }
         #debug-error { color: red; background: #fff0f0; border: 1px solid red; padding: 15px; margin: 20px; border-radius: 8px; font-size: 14px; display: none; white-space: pre-wrap; }
         
-        /* ローディング画面のスタイル */
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-weight:bold; color:var(--ikea-blue); }
         .spinner { width: 50px; height: 50px; border: 5px solid #eee; border-top: 5px solid var(--ikea-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -110,7 +140,6 @@
 </div>
 
 <script>
-    // いただいたデプロイURLを設定済みです
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzGz19d3V3tuN5vTCIM1cd8UiDqmNtnfXyoyuvdbxyHqfPYsDKjmuOY3yNOT9aJPuNs/exec";
 
     (function() {
@@ -162,6 +191,16 @@
             <label for="visitDate">行った日 / 予定日</label>
             <input type="date" id="visitDate">
         </div>
+        
+        <div class="form-group">
+            <label>📸 写真（最大5枚まで保存可能）</label>
+            <div class="image-upload-wrapper">
+                <label for="imageInput" class="file-input-label">🖼️ 写真を追加する</label>
+                <input type="file" id="imageInput" accept="image/*" onchange="handleImageSelected(this)">
+                <div class="modal-image-gallery" id="modalImageGallery"></div>
+            </div>
+        </div>
+
         <div class="form-group">
             <label for="visitMemo">思い出メモ</label>
             <textarea id="visitMemo" rows="3" placeholder="思い出や見たい動物をメモしましょう！"></textarea>
@@ -173,6 +212,11 @@
         </div>
         <button class="save-btn" onclick="saveDetails()">保存する</button>
     </div>
+</div>
+
+<div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
+    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+    <img class="lightbox-content" id="lightboxImage" src="" alt="拡大画像">
 </div>
 
 <script>
@@ -303,6 +347,7 @@
     let selectedStatus = "none";
     let oshiCounter = 0;
     let userRecords = {};
+    let tempImagesArray = []; // 編集中の複数Base64画像を一時保持
 
     window.onload = function() {
         renderFilterButtons();
@@ -423,9 +468,29 @@
                     let genderClass = "none";
                     if (o.gender === "male") { genderMark = " ♂"; genderClass = "male"; }
                     if (o.gender === "female") { genderMark = " ♀"; genderClass = "female"; }
-                    itemsHtml += `<div class="oshi-info ${genderClass}">❤ : ${o.species || ''}${o.name ? ' (' + o.name + ')' : ''}${genderMark}</div>`;
+                    const namePart = o.name ? `${o.name}` : '名前未設定';
+                    const speciesPart = o.species ? `（${o.species}）` : '';
+                    itemsHtml += `<div class="oshi-info ${genderClass}">❤ : ${namePart}${genderMark}${speciesPart}</div>`;
                 });
                 oshisHtml = `<div class="oshi-list-home">${itemsHtml}</div>`;
+            }
+
+            // 🗺️ MAP検索用リンク（タップイベントの伝播を防止して安全に遷移）
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`;
+            const mapButtonHtml = `<a href="${mapUrl}" target="_blank" class="map-link" onclick="event.stopPropagation();">MAP</a>`;
+
+            // 📸 ホーム画面用の写真全体（contain）複数枚ミニサムネイル表示
+            let imgGalleryHtml = "";
+            let imagesList = [];
+            if (record.images && Array.isArray(record.images)) {
+                imagesList = record.images;
+            } else if (record.image) {
+                imagesList = [record.image]; // 旧バージョン互換用
+            }
+
+            if (imagesList.length > 0) {
+                const thumbnails = imagesList.map(imgSrc => `<img src="${imgSrc}" class="home-spot-thumbnail" alt="ミニ写真">`).join('');
+                imgGalleryHtml = `<div class="home-image-gallery">${thumbnails}</div>`;
             }
 
             const locationHtml = spot.location ? `<span class="location-text">${spot.location}</span>` : '';
@@ -438,6 +503,7 @@
                 <div class="spot-left">
                     <div class="spot-name-row">
                         <span class="spot-name">${spot.name}</span>
+                        ${mapButtonHtml}
                         ${statusHtml}
                     </div>
                     <div class="spot-tags">
@@ -445,6 +511,7 @@
                         ${locationHtml}
                     </div>
                     ${oshisHtml}
+                    ${imgGalleryHtml}
                 </div>
                 <div class="chevron">＞</div>
             `;
@@ -490,11 +557,95 @@
         container.appendChild(itemDiv);
     }
 
+    // 📸 画像追加時の圧縮＆複数追加処理（上限5枚）
+    function handleImageSelected(input) {
+        if (tempImagesArray.length >= 5) {
+            alert("写真は最大5枚まで保存可能です。");
+            input.value = "";
+            return;
+        }
+
+        const file = input.files[0];
+        if (!file) return;
+
+        showLoading(true, "写真を圧縮・追加中...");
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                // 容量確保のため長辺最大600pxに最適化リサイズ
+                const maxSide = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxSide || height > maxSide) {
+                    if (width > height) {
+                        height = Math.round((height * maxSide) / width);
+                        width = maxSide;
+                    } else {
+                        width = Math.round((width * maxSide) / height);
+                        height = maxSide;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const base64Img = canvas.toDataURL('image/jpeg', 0.65);
+                tempImagesArray.push(base64Img);
+                
+                renderModalImages();
+                input.value = ""; // 連続選択可能にするためリセット
+                showLoading(false);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 📸 詳細画面モーダル内の中サイズサムネイル描写（タップで拡大表示イベント設置）
+    function renderModalImages() {
+        const gallery = document.getElementById('modalImageGallery');
+        if (!gallery) return;
+        gallery.innerHTML = "";
+
+        tempImagesArray.forEach((imgSrc, index) => {
+            const container = document.createElement('div');
+            container.className = "modal-image-container";
+            container.onclick = () => openLightbox(imgSrc);
+            container.innerHTML = `
+                <img src="${imgSrc}" alt="プレビュー">
+                <button type="button" class="delete-img-btn" onclick="event.stopPropagation(); removeModalImage(${index})">✕</button>
+            `;
+            gallery.appendChild(container);
+        });
+    }
+
+    // 画像個別削除
+    function removeModalImage(index) {
+        tempImagesArray.splice(index, 1);
+        renderModalImages();
+    }
+
+    // 🔍 写真をアップ（拡大）で見るモーダル処理
+    function openLightbox(imgSrc) {
+        document.getElementById('lightboxImage').src = imgSrc;
+        document.getElementById('lightboxModal').style.display = 'flex';
+    }
+    function closeLightbox() {
+        document.getElementById('lightboxModal').style.display = 'none';
+    }
+
     function openModal(id) {
         currentSelectedSpotId = id;
         const spot = spotsData.find(s => s.id === id);
-        const record = userRecords[id] || { status: "none", date: "", memo: "", oshis: [] };
+        const record = userRecords[id] || { status: "none", date: "", memo: "", oshis: [], images: [] };
         document.getElementById('modalSpotName').innerText = spot.name;
+        
         const regionClass = getRegionClass(spot.region);
         const locationHtml = spot.location ? `<span class="location-text" style="display:inline-block; vertical-align:middle;">${spot.location}</span>` : '';
         document.getElementById('modalSpotTags').innerHTML = `
@@ -504,8 +655,22 @@
             </div>
         `;
         setStatus(record.status || "none");
+        
+        // 日付入力
         document.getElementById('visitDate').value = record.date || "";
+
         document.getElementById('visitMemo').value = record.memo || "";
+        
+        // 📸 複数写真データの一時配列読み込み（旧データ互換つき）
+        if (record.images && Array.isArray(record.images)) {
+            tempImagesArray = [...record.images];
+        } else if (record.image) {
+            tempImagesArray = [record.image];
+        } else {
+            tempImagesArray = [];
+        }
+        renderModalImages();
+
         const container = document.getElementById('oshiFormContainer');
         if (container) {
             container.innerHTML = "";
@@ -539,8 +704,17 @@
         });
         const date = document.getElementById('visitDate').value;
         const memo = document.getElementById('visitMemo').value.trim();
-        userRecords[id] = { status: selectedStatus, date: date, memo: memo, oshis: oshisDataCollected };
-        if (selectedStatus === "none" && (date || memo || oshisDataCollected.length > 0)) {
+        
+        // 📸 複数枚対応版オブジェクトとして保存
+        userRecords[id] = { 
+            status: selectedStatus, 
+            date: date, 
+            memo: memo, 
+            oshis: oshisDataCollected,
+            images: tempImagesArray 
+        };
+        
+        if (selectedStatus === "none" && (date || memo || oshisDataCollected.length > 0 || tempImagesArray.length > 0)) {
             userRecords[id].status = "wantto";
         }
         
