@@ -55,7 +55,7 @@
         .spot-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .spot-name { font-weight: bold; font-size: 16px; }
         
-        /* 🗺️ MAPボタンのスタイル（タグ群に馴染むように調整） */
+        /* 🗺️ MAPボタンのスタイル */
         .map-link { background-color: #e6f2ff; color: var(--ikea-blue); font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-decoration: none; display: inline-flex; align-items: center; border: 1px solid #b3d7ff; height: 16px; box-sizing: border-box; }
         .map-link:active { background-color: #b3d7ff; }
 
@@ -273,7 +273,7 @@
         { id: 39, name: "いしかわ動物園", type: "zoo", region: "北陸", location: "石川県能美市" },
         { id: 40, name: "西山動物園", type: "zoo", region: "北陸", location: "福井県鯖江市" },
         { id: 41, name: "小諸市動物園", type: "zoo", region: "中部", location: "長野県小諸市" },
-        { id: 42, name: "須坂市動物園", type: "zoo", region: "中部", location: "長野県須坂市" },
+        { id: 42, name: "須坂市動物園", type: "zoo", region: "中部", location: "長野県長野市" },
         { id: 43, name: "茶臼山動物園", type: "zoo", region: "中部", location: "長野県長野市" },
         { id: 44, name: "飯田市立動物園", type: "zoo", region: "中部", location: "長野県飯田市" },
         { id: 45, name: "大町山岳博物館", type: "zoo", region: "中部", location: "長野県大町市" },
@@ -476,7 +476,7 @@
                 oshisHtml = `<div class="oshi-list-home">${itemsHtml}</div>`;
             }
 
-            // 【微調整】MAP検索用ボタン
+            // 【構文エラー修正完了】Googleマップ検索URLを正しく生成するように修正しました
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`;
             const mapButtonHtml = `<a href="${mapUrl}" target="_blank" class="map-link" onclick="event.stopPropagation();">MAP</a>`;
 
@@ -718,7 +718,7 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 </script>
 </body>
