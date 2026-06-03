@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FooZoo - 推しアニマルいっぱい記録帳</title>
+    <style>
+        :root {
+            --ikea-blue: #0051ba;
+            --ikea-yellow: #ffda1a;
+            --status-visited: #fff9e6;
+            --status-wantto: #e6f2ff;
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --gender-male: #0066cc;
+            --gender-female: #e60073;
+            --color-hokkaido: #4a7c59;
+            --color-tohoku: #68b0ab;
+            --color-kanto: #d68060;
+            --color-hokuriku: #a37081;
+            --color-chubu: #e0a96d;
+            --color-kinki: #6c5b7b;
+            --color-chugoku: #8f94fb;
+            --color-shikoku: #ff8b94;
+            --color-kyushu: #7da87b;
+        }
+        /* 初期状態では中身を非表示にする（パスワード成功後に表示） */
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; display: none; }
+        header { background-color: var(--ikea-blue); color: white; padding: 20px; text-align: center; }
+        header h1 { margin: 0; font-size: 28px; font-weight: 900; }
+        header h1 span { color: var(--ikea-yellow); }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+        .progress-container { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .progress-label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
+        .progress-bar-bg { background: #eee; border-radius: 10px; height: 20px; overflow: hidden; }
+        .progress-bar { background: var(--ikea-blue); height: 100%; width: 0%; transition: width 0.4s ease; }
+        .filter-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        .filter-btn { background: #e0e0e0; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: bold; }
+        .filter-btn.active { background: var(--ikea-blue); color: white; }
+        .spot-list { display: flex; flex-direction: column; gap: 12px; }
+        .spot-card { background: var(--card-bg); padding: 15px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .spot-card.visited { background-color: var(--status-visited); }
+        .spot-card.wantto { background-color: var(--status-wantto); }
+        .spot-left { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+        .spot-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .spot-name { font-weight: bold; font-size: 16px; }
+        .status-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+        .status-badge.visited { background-color: #dcb100; color: white; }
+        .status-badge.wantto { background-color: #ffffff; color: var(--ikea-blue); border: 1px solid var(--ikea-blue); }
+        .visit-date-text { font-size: 11px; color: #b38600; font-weight: bold; }
+        .oshi-list-home { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+        .oshi-info { font-size: 13px; font-weight: bold; }
+        .oshi-info.male { color: var(--gender-male); }
+        .oshi-info.female { color: var(--gender-female); }
+        .oshi-info.none { color: #555555; }
+        .spot-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; }
+        .tag.reg-hokkaido { background-color: var(--color-hokkaido); }
+        .tag.reg-tohoku { background-color: var(--color-tohoku); }
+        .tag.reg-kanto { background-color: var(--color-kanto); }
+        .tag.reg-hokuriku { background-color: var(--color-hokuriku); }
+        .tag.reg-chubu { background-color: var(--color-chubu); }
+        .tag.reg-kinki { background-color: var(--color-kinki); }
+        .tag.reg-chugoku { background-color: var(--color-chugoku); }
+        .tag.reg-shikoku { background-color: var(--color-shikoku); }
+        .tag.reg-kyushu { background-color: var(--color-kyushu); }
+        .location-text { font-size: 12px; color: #555555; font-weight: bold; }
+        .chevron { color: #ccc; font-size: 18px; padding-left: 10px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 16px; box-sizing: border-box; }
+        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 12px; max-width: 500px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #999; }
+        .modal-title { margin-top: 0; color: var(--ikea-blue); font-size: 22px; padding-right: 30px; word-break: break-all; }
+        .form-group { margin-top: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .status-selector { display: flex; gap: 8px; margin-top: 5px; }
+        .status-btn { flex: 1; padding: 10px 4px; border: 2px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .status-btn.selected { border-color: var(--ikea-blue); background-color: #f0f6ff; color: var(--ikea-blue); }
+        .oshi-wrapper { margin-top: 15px; }
+        .oshi-item-form { background: #fff9e6; padding: 12px; border-radius: 8px; border: 1px solid var(--ikea-yellow); margin-bottom: 10px; position: relative; box-sizing: border-box; }
+        .oshi-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .oshi-row .sub-group { flex: 1; min-width: 0; }
+        .oshi-row label { font-size: 11px; color: #666; margin-bottom: 2px; }
+        .gender-group { display: flex; gap: 12px; margin-top: 6px; font-size: 13px; flex-wrap: wrap; align-items: center; }
+        .gender-group label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .remove-oshi-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #cc0000; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .add-oshi-btn { background: #ffffff; color: #b38600; border: 1px dashed var(--ikea-yellow); width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; box-sizing: border-box; }
+        .form-group input[type="text"], .form-group input[type="date"], .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; -webkit-appearance: none; }
+        .save-btn { background-color: var(--ikea-blue); color: white; border: none; width: 100%; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; box-sizing: border-box; }
+        #debug-error { color: red; background: #fff0f0; border: 1px solid red; padding: 15px; margin: 20px; border-radius: 8px; font-size: 14px; display: none; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<script>
+    (function() {
+        // パスワード入力プロンプトを表示
+        const password = prompt("パスワードを入力してください：");
+        if (password === "0220") {
+            // パスワードが合っていれば画面を表示
+            document.body.style.display = "block";
+        } else {
+            // 間違っていたら警告を出して真っ白な画面にする
+            alert("パスワードが違います。アクセスできません。");
+            document.write('<h1 style="text-align:center; margin-top:50px; color:#333; font-family:sans-serif;">🔒 アクセス権限がありません。</h1><p style="text-align:center; color:#666;">ページを再読み込みして正しいパスワードを入力してください。</p>');
+        }
+    })();
+</script>
+
+<header>
+    <h1>Foo<span>Zoo</span></h1>
+</header>
+
+<div class="container">
+    <div id="debug-error"></div>
+
+    <div class="progress-container">
+        <div class="progress-label">
+            <span>日本全国制覇の進捗（行った）</span>
+            <span id="progressPercent">0% (0/0)</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <div class="filter-container" id="filterContainer"></div>
+    <div class="spot-list" id="spotList"></div>
+</div>
+
+<div class="modal" id="detailModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 id="modalSpotName" class="modal-title">施設名</h2>
+        <div id="modalSpotTags"></div>
+        <div class="form-group">
+            <label>ステータス</label>
+            <div class="status-selector">
+                <button type="button" class="status-btn" data-status="none" onclick="setStatus('none')">未設定</button>
+                <button type="button" class="status-btn" data-status="wantto" onclick="setStatus('wantto')">✨ 行きたい</button>
+                <button type="button" class="status-btn" data-status="visited" onclick="setStatus('visited')">🐾 行った</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="visitDate">行った日 / 予定日</label>
+            <input type="date" id="visitDate">
+        </div>
+        <div class="form-group">
+            <label for="visitMemo">思い出メモ</label>
+            <textarea id="visitMemo" rows="3" placeholder="思い出や見たい動物をメモしましょう！"></textarea>
+        </div>
+        <div class="form-group">
+            <label>❤ 推しアニマル</label>
+            <div id="oshiFormContainer" class="oshi-wrapper"></div>
+            <button type="button" class="add-oshi-btn" onclick="addOshiFormItem()">＋ 推しアニマルを追加</button>
+        </div>
+        <button class="save-btn" onclick="saveDetails()">保存する</button>
+    </div>
+</div>
+
+<script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        const debugDiv = document.getElementById('debug-error');
+        if (debugDiv) {
+            debugDiv.style.display = 'block';
+            debugDiv.innerText = `【JavaScriptエラー発生】\nエラー内容: ${message}\n行番号: ${lineno}行目`;
+        }
+        return false;
+    };
+
+    const spotsData = [
+        { id: 1, name: "旭川市旭山動物園", type: "zoo", region: "北海道", location: "北海道旭川市" },
+        { id: 2, name: "札幌市円山動物園", type: "zoo", region: "北海道", location: "北海道札幌市" },
+        { id: 3, name: "おびひろ動物園", type: "zoo", region: "北海道", location: "北海道帯広市" },
+        { id: 4, name: "釧路市動物園", type: "zoo", region: "北海道", location: "北海道釧路市" },
+        { id: 5, name: "弥生いこいの広場", type: "zoo", region: "東北", location: "青森県弘前市" },
+        { id: 6, name: "秋田市大森山動物園", type: "zoo", region: "東北", location: "秋田県秋田市" },
+        { id: 7, name: "盛岡市動物公園ZOOMO", type: "zoo", region: "東北", location: "岩手県盛岡市" },
+        { id: 8, name: "岩手サファリパーク", type: "zoo", region: "東北", location: "岩手県一関市" },
+        { id: 9, name: "八木山動物公園", type: "zoo", region: "東北", location: "宮城県仙台市" },
+        { id: 10, name: "宇都宮動物園", type: "zoo", region: "関東", location: "栃木県宇都宮市" },
+        { id: 11, name: "那須どうぶつ王国", type: "zoo", region: "関東", location: "栃木県那須町" },
+        { id: 12, name: "那須サファリパーク", type: "zoo", region: "関東", location: "栃木県那須町" },
+        { id: 13, name: "桐生が岡動物園", type: "zoo", region: "関東", location: "群馬県桐生市" },
+        { id: 14, name: "群馬サファリパーク", type: "zoo", region: "関東", location: "群馬県富岡市" },
+        { id: 15, name: "かみね動物園", type: "zoo", region: "関東", location: "茨城県日立市" },
+        { id: 16, name: "大宮公園小動物園", type: "zoo", region: "関東", location: "埼玉県さいたま市" },
+        { id: 17, name: "埼玉県こども動物自然公園", type: "zoo", region: "関東", location: "埼玉県東松山市" },
+        { id: 18, name: "東武動物公園", type: "zoo", region: "関東", location: "埼玉県宮代町" },
+        { id: 19, name: "智光山公園こども動物園", type: "zoo", region: "関東", location: "埼玉県狭山市" },
+        { id: 20, name: "大崎公園子供動物園", type: "zoo", region: "関東", location: "埼玉県さいたま市" },
+        { id: 21, name: "恩賜上野動物園", type: "zoo", region: "関東", location: "東京都台東区" },
+        { id: 22, name: "多摩動物公園", type: "zoo", region: "関東", location: "東京都日野市" },
+        { id: 23, name: "井の頭自然文化園", type: "zoo", region: "関東", location: "東京都武蔵野市" },
+        { id: 24, name: "大島公園動物園", type: "zoo", region: "関東", location: "東京都大島町" },
+        { id: 25, name: "羽村市動物公園", type: "zoo", region: "関東", location: "東京都羽村市" },
+        { id: 26, name: "江戸川区自然動物園", type: "zoo", region: "関東", location: "東京都江戸川区" },
+        { id: 27, name: "町田リス園", type: "zoo", region: "関東", location: "東京都町田市" },
+        { id: 28, name: "足立区生物園", type: "zoo", region: "関東", location: "東京都足立区" },
+        { id: 29, name: "千葉市動物公園", type: "zoo", region: "関東", location: "千葉県千葉市" },
+        { id: 30, name: "市川市動植物園", type: "zoo", region: "関東", location: "千葉県市川市" },
+        { id: 31, name: "夢見ヶ崎動物公園", type: "zoo", region: "関東", location: "神奈川県川崎市" },
+        { id: 32, name: "野毛山動物園", type: "zoo", region: "関東", location: "神奈川県横浜市" },
+        { id: 33, name: "横浜市立金沢動物園", type: "zoo", region: "関東", location: "神奈川県横浜市" },
+        { id: 34, name: "よこはま動物園ズーラシア", type: "zoo", region: "関東", location: "神奈川県横浜市" },
+        { id: 35, name: "市原ぞうの国", type: "zoo", region: "関東", location: "千葉県市原市" },
+        { id: 36, name: "甲府市遊亀公園附属動物園", type: "zoo", region: "関東", location: "山梨県甲府市" },
+        { id: 37, name: "富山市ファミリーパーク", type: "zoo", region: "北陸", location: "富山県富山市" },
+        { id: 38, name: "高岡古城公園動物園", type: "zoo", region: "北陸", location: "富山県高岡市" },
+        { id: 39, name: "いしかわ動物園", type: "zoo", region: "北陸", location: "石川県能美市" },
+        { id: 40, name: "西山動物園", type: "zoo", region: "北陸", location: "福井県鯖江市" },
+        { id: 41, name: "小諸市動物園", type: "zoo", region: "中部", location: "長野県小諸市" },
+        { id: 42, name: "須坂市動物園", type: "zoo", region: "中部", location: "長野県須坂市" },
+        { id: 43, name: "茶臼山動物園", type: "zoo", region: "中部", location: "長野県長野市" },
+        { id: 44, name: "飯田市立動物園", type: "zoo", region: "中部", location: "長野県飯田市" },
+        { id: 45, name: "大町山岳博物館", type: "zoo", region: "中部", location: "長野県大町市" },
+        { id: 46, name: "楽寿園", type: "zoo", region: "中部", location: "静岡県三島市" },
+        { id: 47, name: "富士サファリパーク", type: "zoo", region: "中部", location: "静岡県裾野市" },
+        { id: 48, name: "伊豆アニマルキングダム", type: "zoo", region: "中部", location: "静岡県東アイランド町" },
+        { id: 49, name: "伊豆シャボテン動物公園", type: "zoo", region: "中部", location: "静岡県伊東市" },
+        { id: 50, name: "熱川バナナワニ園", type: "zoo", region: "中部", location: "静岡県東伊豆町" },
+        { id: 51, name: "日本平動物園", type: "zoo", region: "中部", location: "静岡県静岡市" },
+        { id: 52, name: "浜松市動物園", type: "zoo", region: "中部", location: "静岡県浜松市" },
+        { id: 53, name: "掛川花鳥園", type: "zoo", region: "中部", location: "静岡県掛川市" },
+        { id: 54, name: "豊橋総合動植物公園", type: "zoo", region: "中部", location: "愛知県豊橋市" },
+        { id: 55, name: "東山動植物園", type: "zoo", region: "中部", location: "愛知県名古屋市" },
+        { id: 56, name: "豊田市鞍ケ池公園", type: "zoo", region: "中部", location: "愛知県豊田市" },
+        { id: 57, name: "岡崎市東公園動物園", type: "zoo", region: "中部", location: "愛知県岡崎市" },
+        { id: 58, name: "日本モンキーパーク（日本モンキーセンター）", type: "zoo", region: "中部", location: "愛知県犬山市" },
+        { id: 59, name: "京都市動物園", type: "zoo", region: "近畿", location: "京都府京都市" },
+        { id: 60, name: "ごかつら池どうぶつパーク", type: "zoo", region: "近畿", location: "三重県多気町" },
+        { id: 61, name: "和歌山城公園動物園", type: "zoo", region: "近畿", location: "和歌山県和歌山市" },
+        { id: 62, name: "アドベンチャーワールド", type: "zoo", region: "近畿", location: "和歌山県白浜町" },
+        { id: 63, name: "天王寺動物園", type: "zoo", region: "近畿", location: "大阪府大阪市" },
+        { id: 64, name: "五月山動物園", type: "zoo", region: "近畿", location: "大阪府池田市" },
+        { id: 65, name: "王子動物園", type: "zoo", region: "近畿", location: "兵庫県神戸市" },
+        { id: 66, name: "神戸どうぶつ王国", type: "zoo", region: "近畿", location: "兵庫県神戸市" },
+        { id: 67, name: "姫路市立動物園", type: "zoo", region: "近畿", location: "兵庫県姫路市" },
+        { id: 68, name: "姫路セントラルパーク", type: "zoo", region: "近畿", location: "兵庫県姫路市" },
+        { id: 69, name: "淡路ファームパーク イングランドの丘", type: "zoo", region: "近畿", location: "兵庫県南あわじ市" },
+        { id: 70, name: "池田動物園", type: "zoo", region: "中国", location: "岡山県岡山市" },
+        { id: 71, name: "広島市安佐動物公園", type: "zoo", region: "中国", location: "広島県広島市" },
+        { id: 72, name: "福山市立動物園", type: "zoo", region: "中国", location: "広島県福山市" },
+        { id: 73, name: "徳山動物園", type: "zoo", region: "中国", location: "山口県周南市" },
+        { id: 74, name: "秋吉台自然動物公園サファリランド", type: "zoo", region: "中国", location: "山口県美祢市" },
+        { id: 75, name: "ときわ動物園", type: "zoo", region: "中国", location: "山口県宇部市" },
+        { id: 76, name: "とくしま動物園", type: "zoo", region: "四国", location: "徳島県徳島市" },
+        { id: 77, name: "愛媛県立とべ動物園", type: "zoo", region: "四国", location: "愛媛県砥部町" },
+        { id: 78, name: "高知県立のいち動物公園", type: "zoo", region: "四国", location: "高知県香南市" },
+        { id: 79, name: "わんぱーくこうちアニマルランド", type: "zoo", region: "四国", location: "高知県高知市" },
+        { id: 80, name: "到津の森公園", type: "zoo", region: "九州・沖縄", location: "福岡県北九州市" },
+        { id: 81, name: "福岡市動物園", type: "zoo", region: "九州・沖縄", location: "福岡県福岡市" },
+        { id: 82, name: "大牟田市動物園", type: "zoo", region: "九州・沖縄", location: "福岡県大牟田市" },
+        { id: 83, name: "久留米市鳥類センター", type: "zoo", region: "九州・沖縄", location: "福岡県久留米市" },
+        { id: 84, name: "海の中道動物の森", type: "zoo", region: "九州・沖縄", location: "福岡県福岡市" },
+        { id: 85, name: "九十九島動植物園森きらら", type: "zoo", region: "九州・沖縄", location: "長崎県佐世保市" },
+        { id: 86, name: "長崎バイオパーク", type: "zoo", region: "九州・沖縄", location: "長崎県西海市" },
+        { id: 87, name: "九州自然動物公園アフリカンサファリ", type: "zoo", region: "九州・沖縄", location: "大分県宇佐市" },
+        { id: 88, name: "熊本市動植物園", type: "zoo", region: "九州・沖縄", location: "熊本県熊本市" },
+        { id: 89, name: "宮崎市フェニックス自然動物園", type: "zoo", region: "九州・沖縄", location: "宮崎県宮崎市" },
+        { id: 90, name: "平川動物公園", type: "zoo", region: "九州・沖縄", location: "鹿児島県鹿児島市" },
+        { id: 91, name: "沖縄こどもの国", type: "zoo", region: "九州・沖縄", location: "沖縄県沖縄市" },
+        { id: 92, name: "ネオパークオキナワ", type: "zoo", region: "九州・沖縄", location: "沖縄県名護市" }
+    ];
+
+    const regions = ["全国", "北海道", "東北", "関東", "北陸", "中部", "近畿", "中国", "四国", "九州・沖縄"];
+    
+    function getRegionClass(region) {
+        switch(region) {
+            case "北海道": return "reg-hokkaido";
+            case "東北": return "reg-tohoku";
+            case "関東": return "reg-kanto";
+            case "北陸": return "reg-hokuriku";
+            case "中部": return "reg-chubu";
+            case "近畿": return "reg-kinki";
+            case "中国": return "reg-chugoku";
+            case "四国": return "reg-shikoku";
+            case "九州・沖縄": return "reg-kyushu";
+            default: return "region";
+        }
+    }
+
+    let currentRegion = "全国";
+    let currentSelectedSpotId = null;
+    let selectedStatus = "none";
+    let oshiCounter = 0;
+
+    let userRecords = {};
+    try {
+        userRecords = JSON.parse(localStorage.getItem('foozoo_records_v4')) || {};
+    } catch(e) {
+        console.error("LocalStorageの読み込みに失敗しました", e);
+    }
+
+    window.onload = function() {
+        renderFilterButtons();
+        renderSpotList();
+        updateProgressBar();
+    };
+
+    function renderFilterButtons() {
+        const container = document.getElementById('filterContainer');
+        container.innerHTML = regions.map(reg => `
+            <button class="filter-btn ${reg === currentRegion ? 'active' : ''}" onclick="changeRegion('${reg}')">
+                ${reg}
+            </button>
+        `).join('');
+    }
+
+    function changeRegion(region) {
+        currentRegion = region;
+        renderFilterButtons();
+        renderSpotList();
+    }
+
+    function updateProgressBar() {
+        const total = spotsData.length;
+        let visitedCount = 0;
+        spotsData.forEach(spot => {
+            if (userRecords[spot.id]?.status === 'visited') visitedCount++;
+        });
+        const percent = total > 0 ? Math.round((visitedCount / total) * 100) : 0;
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').innerText = `${percent}% (${visitedCount} / ${total})`;
+    }
+
+    function formatDateString(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) return `${parts[0]}/${parts[1]}/${parts[2]}`;
+        return dateStr;
+    }
+
+    function renderSpotList() {
+        const listDiv = document.getElementById('spotList');
+        if (!listDiv) return;
+        listDiv.innerHTML = '';
+
+        const filteredSpots = currentRegion === "全国" 
+            ? spotsData 
+            : spotsData.filter(s => s.region === currentRegion);
+
+        filteredSpots.forEach(spot => {
+            const record = userRecords[spot.id] || {};
+            const status = record.status || "none";
+            
+            let cardClass = "spot-card";
+            let statusHtml = "";
+            if (status === "visited") {
+                cardClass += " visited";
+                const dateText = record.date ? ` <span class="visit-date-text">(${formatDateString(record.date)})</span>` : '';
+                statusHtml = `<span class="status-badge visited">行った</span>${dateText}`;
+            } else if (status === "wantto") {
+                cardClass += " wantto";
+                statusHtml = '<span class="status-badge wantto">行きたい</span>';
+            }
+
+            let oshisHtml = "";
+            if (record.oshis && record.oshis.length > 0) {
+                let itemsHtml = "";
+                record.oshis.forEach(o => {
+                    let genderMark = "";
+                    let genderClass = "none";
+                    if (o.gender === "male") { genderMark = " ♂"; genderClass = "male"; }
+                    if (o.gender === "female") { genderMark = " ♀"; genderClass = "female"; }
+                    itemsHtml += `<div class="oshi-info ${genderClass}">❤ : ${o.species || ''}${o.name ? ' (' + o.name + ')' : ''}${genderMark}</div>`;
+                });
+                oshisHtml = `<div class="oshi-list-home">${itemsHtml}</div>`;
+            }
+
+            const locationHtml = spot.location ? `<span class="location-text">${spot.location}</span>` : '';
+            const regionClass = getRegionClass(spot.region);
+
+            const card = document.createElement('div');
+            card.className = cardClass;
+            card.onclick = () => openModal(spot.id);
+            card.innerHTML = `
+                <div class="spot-left">
+                    <div class="spot-name-row">
+                        <span class="spot-name">${spot.name}</span>
+                        ${statusHtml}
+                    </div>
+                    <div class="spot-tags">
+                        <span class="tag ${regionClass}">${spot.region}</span>
+                        ${locationHtml}
+                    </div>
+                    ${oshisHtml}
+                </div>
+                <div class="chevron">＞</div>
+            `;
+            listDiv.appendChild(card);
+        });
+    }
+
+    function setStatus(status) {
+        selectedStatus = status;
+        document.querySelectorAll('.status-btn').forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.getAttribute('data-status') === status) btn.classList.add('selected');
+        });
+    }
+
+    function addOshiFormItem(species = "", name = "", gender = "none") {
+        oshiCounter++;
+        const container = document.getElementById('oshiFormContainer');
+        if (!container) return;
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'oshi-item-form';
+        itemDiv.innerHTML = `
+            <button type="button" class="remove-oshi-btn" onclick="this.parentElement.remove()">✖ 削除</button>
+            <div class="oshi-row">
+                <div class="sub-group">
+                    <label>種類</label>
+                    <input type="text" class="oshi-species-input" placeholder="例：ラッコ" value="${escapeHtml(species)}">
+                </div>
+                <div class="sub-group">
+                    <label>お名前</label>
+                    <input type="text" class="oshi-name-input" placeholder="例：メイちゃん" value="${escapeHtml(name)}">
+                </div>
+            </div>
+            <div>
+                <label>性別</label>
+                <div class="gender-group">
+                    <label><input type="radio" name="gender_${oshiCounter}" value="none" ${gender === 'none' ? 'checked' : ''}> 指定なし</label>
+                    <label><input type="radio" name="gender_${oshiCounter}" value="male" ${gender === 'male' ? 'checked' : ''}> ♂ 男の子</label>
+                    <label><input type="radio" name="gender_${oshiCounter}" value="female" ${gender === 'female' ? 'checked' : ''}> ♀ 女の子</label>
+                </div>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+    }
+
+    function openModal(id) {
+        currentSelectedSpotId = id;
+        const spot = spotsData.find(s => s.id === id);
+        const record = userRecords[id] || { status: "none", date: "", memo: "", oshis: [] };
+        document.getElementById('modalSpotName').innerText = spot.name;
+        const regionClass = getRegionClass(spot.region);
+        const locationHtml = spot.location ? `<span class="location-text" style="display:inline-block; vertical-align:middle;">${spot.location}</span>` : '';
+        document.getElementById('modalSpotTags').innerHTML = `
+            <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center;">
+                <span class="tag ${regionClass}">${spot.region}</span>
+                ${locationHtml}
+            </div>
+        `;
+        setStatus(record.status || "none");
+        document.getElementById('visitDate').value = record.date || "";
+        document.getElementById('visitMemo').value = record.memo || "";
+        const container = document.getElementById('oshiFormContainer');
+        if (container) {
+            container.innerHTML = "";
+            if (record.oshis && record.oshis.length > 0) {
+                record.oshis.forEach(o => addOshiFormItem(o.species, o.name, o.gender));
+            } else {
+                addOshiFormItem();
+            }
+        }
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = 'none';
+        currentSelectedSpotId = null;
+    }
+
+    function saveDetails() {
+        const id = currentSelectedSpotId;
+        if (!id) return;
+        const oshiItems = document.querySelectorAll('.oshi-item-form');
+        const oshisDataCollected = [];
+        oshiItems.forEach(item => {
+            const species = item.querySelector('.oshi-species-input').value.trim();
+            const name = item.querySelector('.oshi-name-input').value.trim();
+            const checkedRadio = item.querySelector('input[type="radio"]:checked');
+            const gender = checkedRadio ? checkedRadio.value : "none";
+            if (species || name) {
+                oshisDataCollected.push({ species: species, name: name, gender: gender });
+            }
+        });
+        const date = document.getElementById('visitDate').value;
+        const memo = document.getElementById('visitMemo').value.trim();
+        userRecords[id] = { status: selectedStatus, date: date, memo: memo, oshis: oshisDataCollected };
+        if (selectedStatus === "none" && (date || memo || oshisDataCollected.length > 0)) {
+            userRecords[id].status = "wantto";
+        }
+        localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+        updateProgressBar();
+        renderSpotList();
+        closeModal();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+</script>
+</body>
+</html>
