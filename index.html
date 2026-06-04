@@ -380,20 +380,15 @@
             });
     }
 
-    // 【巻き戻り防止対策】保存直前にサーバーの最新状態を引っ張り、編集したスポットのみを結合（マージ）して送信する仕組みに変更
     function saveSingleRecordToGAS(spotId, singleRecord) {
         showLoading(true, "データを最新状態と同期して保存中...");
         
-        // 1. まずサーバーの最新データを取得
         fetch(GAS_URL)
             .then(res => res.json())
             .then(latestServerData => {
                 const combinedRecords = latestServerData || {};
-                
-                // 2. 最新データに対し、いま編集したスポットの情報「だけ」を上書き
                 combinedRecords[spotId] = singleRecord;
                 
-                // 3. 結合した安全なデータをサーバーへPOST送信
                 return fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify(combinedRecords),
@@ -403,7 +398,6 @@
             .then(res => res.json())
             .then(res => {
                 if (res.status === "success") {
-                    // スマホの画面データも最新に更新
                     userRecords[spotId] = singleRecord;
                     localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
                     renderSpotList();
@@ -496,7 +490,7 @@
                 oshisHtml = `<div class="oshi-list-home">${itemsHtml}</div>`;
             }
 
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`;
+            const mapUrl = `https://maps.google.com/?q=${encodeURIComponent(spot.name)}`;
             const mapButtonHtml = `<a href="${mapUrl}" target="_blank" class="map-link" onclick="event.stopPropagation();">MAP</a>`;
 
             let imgGalleryHtml = "";
@@ -729,14 +723,12 @@
         }
         
         closeModal();
-
-        // 衝突回避ロジックを載せた保存関数を実行
         saveSingleRecordToGAS(id, singleRecord);
     }
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     }
 </script>
 </body>
