@@ -380,28 +380,48 @@
             });
     }
 
-    function saveDataToGAS() {
-        showLoading(true, "データを保存中...");
-        fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify(userRecords),
-            headers: { 'Content-Type': 'text/plain' } 
-        })
-        .then(res => res.json())
-        .then(res => {
-            if (res.status === "success") {
+    // 【巻き戻り防止対策】保存直前にサーバーの最新状態を引っ張り、編集したスポットのみを結合（マージ）して送信する仕組みに変更
+    function saveSingleRecordToGAS(spotId, singleRecord) {
+        showLoading(true, "データを最新状態と同期して保存中...");
+        
+        // 1. まずサーバーの最新データを取得
+        fetch(GAS_URL)
+            .then(res => res.json())
+            .then(latestServerData => {
+                const combinedRecords = latestServerData || {};
+                
+                // 2. 最新データに対し、いま編集したスポットの情報「だけ」を上書き
+                combinedRecords[spotId] = singleRecord;
+                
+                // 3. 結合した安全なデータをサーバーへPOST送信
+                return fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(combinedRecords),
+                    headers: { 'Content-Type': 'text/plain' } 
+                });
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === "success") {
+                    // スマホの画面データも最新に更新
+                    userRecords[spotId] = singleRecord;
+                    localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+                    renderSpotList();
+                    updateProgressBar();
+                } else {
+                    alert("保存時にエラーが発生しました: " + res.message);
+                }
+                showLoading(false);
+            })
+            .catch(err => {
+                console.error("データの同期保存に失敗しました", err);
+                alert("通信エラーのため、サーバーと同期できませんでした。スマホ内に一時保存します。次回起動時に最新データが読み込まれます。");
+                userRecords[spotId] = singleRecord;
                 localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-            } else {
-                alert("保存時にエラーが発生しました: " + res.message);
-            }
-            showLoading(false);
-        })
-        .catch(err => {
-            console.error("データの保存に失敗しました", err);
-            alert("通信エラーのためスプレッドシートに保存できませんでした。スマホ内には仮保存しました。");
-            localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-            showLoading(false);
-        });
+                renderSpotList();
+                updateProgressBar();
+                showLoading(false);
+            });
     }
 
     function renderFilterButtons() {
@@ -476,7 +496,6 @@
                 oshisHtml = `<div class="oshi-list-home">${itemsHtml}</div>`;
             }
 
-            // 【構文エラー修正完了】Googleマップ検索URLを正しく生成するように修正しました
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.name)}`;
             const mapButtonHtml = `<a href="${mapUrl}" target="_blank" class="map-link" onclick="event.stopPropagation();">MAP</a>`;
 
@@ -697,7 +716,7 @@
         const date = document.getElementById('visitDate').value;
         const memo = document.getElementById('visitMemo').value.trim();
         
-        userRecords[id] = { 
+        const singleRecord = { 
             status: selectedStatus, 
             date: date, 
             memo: memo, 
@@ -706,19 +725,18 @@
         };
         
         if (selectedStatus === "none" && (date || memo || oshisDataCollected.length > 0 || tempImagesArray.length > 0)) {
-            userRecords[id].status = "wantto";
+            singleRecord.status = "wantto";
         }
         
-        updateProgressBar();
-        renderSpotList();
         closeModal();
 
-        saveDataToGAS();
+        // 衝突回避ロジックを載せた保存関数を実行
+        saveSingleRecordToGAS(id, singleRecord);
     }
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        return str.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
     }
 </script>
 </body>
