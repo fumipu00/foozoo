@@ -16,7 +16,7 @@
         :root {
             --ikea-blue: #0051ba;
             --ikea-yellow: #ffda1a;
-            --status-visited: #FFFE97;
+            --status-visited: #0051ba;
             --status-wantto: #e6f2ff;
             --bg-color: #f4f7f9;
             --card-bg: #ffffff;
@@ -60,7 +60,7 @@
         .map-link:active { background-color: #b3d7ff; }
 
         .status-badge { font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
-        .status-badge.visited { background-color: #dcb100; color: white; }
+        .status-badge.visited { background-color: #ffffff; color: #0051ba; }
         .status-badge.wantto { background-color: #ffffff; color: var(--ikea-blue); border: 1px solid var(--ikea-blue); }
         .visit-date-text { font-size: 11px; color: #b38600; font-weight: bold; }
         .oshi-list-home { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
@@ -131,9 +131,20 @@
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; font-weight:bold; color:var(--ikea-blue); }
         .spinner { width: 50px; height: 50px; border: 5px solid #eee; border-top: 5px solid var(--ikea-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+    
+.floating-friend-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.floating-friend{position:absolute;width:80px;height:80px;object-fit:contain;opacity:.8;animation:floatFriend 18s ease-in-out infinite;}
+@keyframes floatFriend{
+0%{transform:translate(0,0) rotate(0deg);}
+25%{transform:translate(30px,-40px) rotate(5deg);}
+50%{transform:translate(-20px,-80px) rotate(-5deg);}
+75%{transform:translate(40px,-20px) rotate(3deg);}
+100%{transform:translate(0,0) rotate(0deg);}
+}
+</style>
 </head>
 <body>
+<div id="floatingFriendLayer" class="floating-friend-layer"></div>
 
 <div id="loading-overlay">
     <div class="spinner"></div>
@@ -152,6 +163,23 @@
             document.write('<h1 style="text-align:center; margin-top:50px; color:#333; font-family:sans-serif;">🔒 アクセス権限がありません。</h1>');
         }
     })();
+
+function renderFloatingFriends(){
+ const layer=document.getElementById('floatingFriendLayer');
+ if(!layer) return;
+ layer.innerHTML='';
+ const imgs=[...(friendsImages||[])].sort(()=>Math.random()-0.5).slice(0,3);
+ imgs.forEach((src,i)=>{
+   const img=document.createElement('img');
+   img.src=src;
+   img.className='floating-friend';
+   img.style.left=(10+i*30+Math.random()*20)+'%';
+   img.style.top=(15+Math.random()*60)+'%';
+   img.style.animationDelay=(i*2)+'s';
+   layer.appendChild(img);
+ });
+}
+
 </script>
 
 <header>
@@ -173,6 +201,15 @@
 
     <div class="filter-container" id="filterContainer"></div>
     <div class="spot-list" id="spotList"></div>
+
+<div style="text-align:center;margin:30px 0;">
+<button onclick="toggleFriendsPage()" class="save-btn">🐾 おともだち</button>
+</div>
+<div id="friendsPage" style="display:none;padding:20px;background:#fff;">
+<h2>🐾 おともだち</h2>
+<p>画像は最大10枚まで</p>
+<input type="file" id="friendImageInput" accept="image/*" onchange="addFriendImage(this)">
+<div id="friendsGallery"></div>
 </div>
 
 <div class="modal" id="detailModal">
@@ -348,6 +385,7 @@
     let selectedStatus = "none";
     let oshiCounter = 0;
     let userRecords = {};
+    let friendsImages = [];
     let tempImagesArray = []; 
 
     window.onload = function() {
@@ -362,11 +400,11 @@
     }
 
     function loadDataFromGAS() {
-        showLoading(true, "スプレッドシートからデータを取得中...");
+        showLoading(true, "Now loading...");
         fetch(GAS_URL)
             .then(res => res.json())
             .then(data => {
-                userRecords = data || {};
+                if(data.records){userRecords=data.records||{};friendsImages=data.friendsImages||[];}else{userRecords=data||{};}
                 renderSpotList();
                 updateProgressBar();
                 showLoading(false);
@@ -381,7 +419,7 @@
     }
 
     function saveSingleRecordToGAS(spotId, singleRecord) {
-        showLoading(true, "データを最新状態と同期して保存中...");
+        showLoading(true, "Now loading...");
         
         fetch(GAS_URL)
             .then(res => res.json())
@@ -735,6 +773,26 @@
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+
+function toggleFriendsPage(){
+ const p=document.getElementById('friendsPage');
+ p.style.display=p.style.display==='none'?'block':'none';
+ renderFriendsGallery(); renderFloatingFriends();
+}
+function renderFriendsGallery(){
+ const g=document.getElementById('friendsGallery'); if(!g)return;
+ g.innerHTML=(friendsImages||[]).map((img,i)=>`<div style="display:inline-block;position:relative;margin:5px"><img src="${img}" style="width:80px;height:80px;object-fit:cover"><button onclick="deleteFriendImage(${i})" style="position:absolute;right:0;top:0">×</button></div>`).join('');
+}
+function addFriendImage(inp){
+ if(friendsImages.length>=10){alert('10枚までです');return;}
+ const f=inp.files[0]; if(!f)return;
+ const r=new FileReader();
+ r.onload=e=>{friendsImages.push(e.target.result); renderFriendsGallery(); renderFloatingFriends(); renderFloatingFriends(); if(typeof saveSingleRecord==='function'){saveSingleRecord();}};
+ r.readAsDataURL(f);
+}
+function deleteFriendImage(i){
+ if(confirm('削除しますか？')){friendsImages.splice(i,1);renderFriendsGallery(); renderFloatingFriends();renderFloatingFriends();if(typeof saveSingleRecord==='function'){saveSingleRecord();}}
+}
 </script>
 </body>
 </html>
