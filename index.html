@@ -16,7 +16,7 @@
         :root {
             --ikea-blue: #0051ba;
             --ikea-yellow: #ffda1a;
-            --status-visited: #fff9e6;
+            --status-visited: #FFFE97;
             --status-wantto: #e6f2ff;
             --bg-color: #f4f7f9;
             --card-bg: #ffffff;
@@ -71,7 +71,7 @@
         
         /* 📸 ホーム画面用の複数画像サムネイル */
         .home-image-gallery { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-        .home-spot-thumbnail { width: 60px; height: 60px; object-fit: contain; border-radius: 4px; background: #eee; border: 1px solid #ddd; }
+        .home-spot-thumbnail { width: 60px; height: 60px; object-fit: contain; border-radius: 4px; background: #eee; border: 1px solid #ddd; cursor:pointer; }
 
         /* タグ表示エリアのレイアウト調整 */
         .spot-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
@@ -137,7 +137,7 @@
 
 <div id="loading-overlay">
     <div class="spinner"></div>
-    <div id="loading-text">データを読み込み中...</div>
+    <div id="loading-text">Now loading...</div>
 </div>
 
 <script>
@@ -215,8 +215,8 @@
     </div>
 </div>
 
-<div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
-    <span class="lightbox-close" onclick="closeLightbox()">×</span>
+<div class="lightbox-modal" id="lightboxModal">
+    <span class="lightbox-close" onclick="event.stopPropagation(); closeLightbox()">×</span>
     <img class="lightbox-content" id="lightboxImage" src="" alt="拡大画像">
 </div>
 
@@ -253,7 +253,7 @@
         { id: 19, name: "智光山公園こども動物園", type: "zoo", region: "関東", location: "埼玉県狭山市" },
         { id: 20, name: "大崎公園子供動物園", type: "zoo", region: "関東", location: "埼玉県さいたま市" },
         { id: 21, name: "恩賜上野動物園", type: "zoo", region: "関東", location: "東京都台東区" },
-        { id: 22, name: "多摩動物公園", type: "zoo", region: "関東", location: "東京都日野市" },
+        { id: 22, name: "多摩動物公園", type: "zoo", region: "関東", location: "東京都野市" },
         { id: 23, name: "井の頭自然文化園", type: "zoo", region: "関東", location: "東京都武蔵野市" },
         { id: 24, name: "大島公園動物園", type: "zoo", region: "関東", location: "東京都大島町" },
         { id: 25, name: "羽村市動物公園", type: "zoo", region: "関東", location: "東京都羽村市" },
@@ -355,7 +355,7 @@
         loadDataFromGAS(); 
     };
 
-    function showLoading(show, text = "データを読み込み中...") {
+    function showLoading(show, text = "Now loading...") {
         const overlay = document.getElementById('loading-overlay');
         document.getElementById('loading-text').innerText = text;
         overlay.style.display = show ? 'flex' : 'none';
@@ -502,7 +502,7 @@
             }
 
             if (imagesList.length > 0) {
-                const thumbnails = imagesList.map(imgSrc => `<img src="${imgSrc}" class="home-spot-thumbnail" alt="ミニ写真">`).join('');
+                const thumbnails = imagesList.map(imgSrc => `<img src="${imgSrc}" class="home-spot-thumbnail" alt="ミニ写真" onclick="event.stopPropagation(); openLightbox('${imgSrc}')">`).join('');
                 imgGalleryHtml = `<div class="home-image-gallery">${thumbnails}</div>`;
             }
 
@@ -728,7 +728,12 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 </script>
 </body>
