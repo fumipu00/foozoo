@@ -231,6 +231,7 @@ function renderFloatingFriends(){
     <p>画像は最大10枚まで投稿できます。背景にはランダムで3枚がふわふわ表示されます。</p>
     <label for="friendImageInput" class="file-input-label friends-upload-label">🖼️ おともだち画像を追加する</label>
     <label for="friendImageInput" class="file-input-label">🖼️ おともだち画像を追加する</label>
+<label for="friendImageInput" class="file-input-label">🖼️ おともだち画像を追加する</label>
 <input type="file" id="friendImageInput" accept="image/*" onchange="addFriendImage(this)">
     <div id="friendsGallery" class="friends-gallery"></div>
 </div>
@@ -458,9 +459,8 @@ function renderFloatingFriends(){
             .catch(() => ({}))
             .then(latestServerData => {
                 const latest = normalizeAppData(latestServerData);
-
-                // サーバーの既存データをベースにし、今回変更した内容だけを上書きする
                 const mergedRecords = { ...(latest.records || {}) };
+
                 Object.keys(appData.records || {}).forEach(key => {
                     mergedRecords[key] = appData.records[key];
                 });
@@ -470,55 +470,13 @@ function renderFloatingFriends(){
                         ? appData.friendsImages
                         : (latest.friendsImages || []);
 
-                const merged = {
+                appData = {
                     records: mergedRecords,
                     friendsImages: mergedFriendsImages
                 };
 
-                appData = merged;
                 syncStateFromAppData();
 
-                return fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(appData),
-                    headers: { 'Content-Type': 'text/plain' }
-                });
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status !== "success") {
-                    alert("保存時にエラーが発生しました: " + res.message);
-                }
-                localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
-                localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-                return res;
-            })
-            .catch(err => {
-                console.error("データの保存に失敗しました", err);
-                localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
-                localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-                alert("通信エラーのため、サーバーと同期できませんでした。スマホ内に一時保存します。");
-                return { status: "local_saved" };
-            })
-            .finally(() => {
-                if (show) showLoading(false);
-            });
-    }) {
-        const show = options.showLoading !== false;
-        if (show) showLoading(true, "Now loading...");
-        appData.records = userRecords || {};
-        appData.friendsImages = Array.isArray(friendsImages) ? friendsImages : [];
-        return fetch(GAS_URL)
-            .then(res => res.json())
-            .catch(() => ({}))
-            .then(latestServerData => {
-                const latest = normalizeAppData(latestServerData);
-                const merged = {
-                    records: { ...(latest.records || {}), ...(appData.records || {}) },
-                    friendsImages: Array.isArray(appData.friendsImages) ? appData.friendsImages : (latest.friendsImages || [])
-                };
-                appData = merged;
-                syncStateFromAppData();
                 return fetch(GAS_URL, {
                     method: 'POST',
                     body: JSON.stringify(appData),
@@ -545,7 +503,6 @@ function renderFloatingFriends(){
                 if (show) showLoading(false);
             });
     }
-
 
     function loadDataFromGAS() {
         showLoading(true, "Now loading...");
@@ -958,38 +915,38 @@ function renderFriendsGallery(){
  `).join('');
 }
 
-
 function resizeFriendImageFile(file, callback){
- const reader=new FileReader();
- reader.onload=function(e){
-   const img=new Image();
-   img.onload=function(){
-     const maxSide=600;
-     let width=img.width;
-     let height=img.height;
-     if(width>maxSide || height>maxSide){
-       if(width>height){
-         height=Math.round((height*maxSide)/width);
-         width=maxSide;
-       }else{
-         width=Math.round((width*maxSide)/height);
-         height=maxSide;
-       }
-     }
-     const canvas=document.createElement('canvas');
-     canvas.width=width;
-     canvas.height=height;
-     const ctx=canvas.getContext('2d');
-     ctx.clearRect(0,0,width,height);
-     ctx.drawImage(img,0,0,width,height);
-     const dataUrl=file.type==='image/png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg',0.75);
-     callback(dataUrl);
-   };
-   img.src=e.target.result;
- };
- reader.readAsDataURL(file);
-}
-
+        const reader = new FileReader();
+        reader.onload = function(e){
+            const img = new Image();
+            img.onload = function(){
+                const maxSide = 600;
+                let width = img.width;
+                let height = img.height;
+                if(width > maxSide || height > maxSide){
+                    if(width > height){
+                        height = Math.round((height * maxSide) / width);
+                        width = maxSide;
+                    }else{
+                        width = Math.round((width * maxSide) / height);
+                        height = maxSide;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0,0,width,height);
+                ctx.drawImage(img,0,0,width,height);
+                const dataUrl = file.type === 'image/png'
+                    ? canvas.toDataURL('image/png')
+                    : canvas.toDataURL('image/jpeg', 0.75);
+                callback(dataUrl);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
 function addFriendImage(inp){
  if(friendsImages.length>=10){alert('10枚までです');inp.value='';return;}
  const f=inp.files[0]; 
