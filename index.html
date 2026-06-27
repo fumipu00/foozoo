@@ -452,51 +452,28 @@ function renderFloatingFriends(){
     function saveAppDataToGAS(options = {}) {
         const show = options.showLoading !== false;
         if (show) showLoading(true, "Now loading...");
+
         appData.records = userRecords || {};
         appData.friendsImages = Array.isArray(friendsImages) ? friendsImages : [];
-        return fetch(GAS_URL)
-            .then(res => res.json())
-            .catch(() => ({}))
-            .then(latestServerData => {
-                const latest = normalizeAppData(latestServerData);
-                const mergedRecords = { ...(latest.records || {}) };
 
-                Object.keys(appData.records || {}).forEach(key => {
-                    mergedRecords[key] = appData.records[key];
-                });
+        localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
+        localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
 
-                const mergedFriendsImages =
-                    Array.isArray(appData.friendsImages) && appData.friendsImages.length > 0
-                        ? appData.friendsImages
-                        : (latest.friendsImages || []);
-
-                appData = {
-                    records: mergedRecords,
-                    friendsImages: mergedFriendsImages
-                };
-
-                syncStateFromAppData();
-
-                return fetch(GAS_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(appData),
-                    headers: { 'Content-Type': 'text/plain' }
-                });
-            })
+        return fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify(appData),
+            headers: { 'Content-Type': 'text/plain' }
+        })
             .then(res => res.json())
             .then(res => {
                 if (res.status !== "success") {
                     alert("保存時にエラーが発生しました: " + res.message);
                 }
-                localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
-                localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
                 return res;
             })
             .catch(err => {
                 console.error("データの保存に失敗しました", err);
-                localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
-                localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-                alert("通信エラーのため、サーバーと同期できませんでした。スマホ内に一時保存します。");
+                alert("通信エラーのため、サーバーと同期できませんでした。スマホ内には保存済みです。");
                 return { status: "local_saved" };
             })
             .finally(() => {
@@ -533,13 +510,20 @@ function renderFloatingFriends(){
         userRecords[spotId] = singleRecord;
         appData.records = userRecords;
         appData.friendsImages = friendsImages;
-        saveAppDataToGAS()
+
+        localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
+        localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+
+        // 先にホーム画面へ即反映
+        renderSpotList();
+        updateProgressBar();
+        renderFloatingFriends();
+
+        // GAS保存は裏で実行。全画面Now loadingは出さない
+        saveAppDataToGAS({ showLoading: false })
             .then(res => {
-                if (res.status === "success" || res.status === "local_saved") {
-                    localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-                    renderSpotList();
-                    updateProgressBar();
-                    renderFloatingFriends();
+                if (res.status === "success") {
+                    console.log("保存しました");
                 }
             });
     }
@@ -955,9 +939,10 @@ function addFriendImage(inp){
  resizeFriendImageFile(f,function(dataUrl){
    friendsImages.push(dataUrl);
    appData.friendsImages=friendsImages;
+   localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
    renderFriendsGallery();
    renderFloatingFriends();
-   saveAppDataToGAS().finally(()=>showLoading(false));
+   saveAppDataToGAS({ showLoading: false }).finally(()=>showLoading(false));
    inp.value='';
  });
 }
@@ -966,9 +951,10 @@ function deleteFriendImage(i){
  if(confirm('削除しますか？')){
    friendsImages.splice(i,1);
    appData.friendsImages=friendsImages;
+   localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
    renderFriendsGallery();
    renderFloatingFriends();
-   saveAppDataToGAS();
+   saveAppDataToGAS({ showLoading: false });
  }
 }
 </script>
