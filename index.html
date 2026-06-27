@@ -449,6 +449,39 @@ function renderFloatingFriends(){
         appData.friendsImages = friendsImages;
     }
 
+    function makeLightBackupData() {
+        const lightRecords = {};
+        Object.keys(userRecords || {}).forEach(key => {
+            const record = userRecords[key] || {};
+            lightRecords[key] = {
+                ...record,
+                images: [],
+                image: ""
+            };
+        });
+        return {
+            records: lightRecords,
+            friendsImages: []
+        };
+    }
+
+    function saveLightBackupToLocalStorage() {
+        try {
+            localStorage.setItem('foozoo_light_backup_v1', JSON.stringify(makeLightBackupData()));
+        } catch (e) {
+            console.warn("軽量バックアップの保存に失敗しました", e);
+        }
+    }
+
+    function loadLightBackupFromLocalStorage() {
+        try {
+            return JSON.parse(localStorage.getItem('foozoo_light_backup_v1')) || { records: {}, friendsImages: [] };
+        } catch (e) {
+            return { records: {}, friendsImages: [] };
+        }
+    }
+
+
     function saveAppDataToGAS(options = {}) {
         const show = options.showLoading !== false;
         if (show) showLoading(true, "Now loading...");
@@ -456,8 +489,9 @@ function renderFloatingFriends(){
         appData.records = userRecords || {};
         appData.friendsImages = Array.isArray(friendsImages) ? friendsImages : [];
 
-        localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
-        localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
+        // 画像入りの大きいデータをlocalStorageに入れるとQuotaExceededErrorになるため、
+        // ブラウザ内には画像なしの軽量バックアップだけ保存する
+        saveLightBackupToLocalStorage();
 
         return fetch(GAS_URL, {
             method: 'POST',
@@ -473,8 +507,8 @@ function renderFloatingFriends(){
             })
             .catch(err => {
                 console.error("データの保存に失敗しました", err);
-                alert("通信エラーのため、サーバーと同期できませんでした。スマホ内には保存済みです。");
-                return { status: "local_saved" };
+                alert("通信エラーのため、サーバーと同期できませんでした。画像を含むデータはサーバー保存が必要です。");
+                return { status: "save_error" };
             })
             .finally(() => {
                 if (show) showLoading(false);
@@ -496,7 +530,7 @@ function renderFloatingFriends(){
             })
             .catch(err => {
                 console.error("データの取得に失敗しました", err);
-                appData = JSON.parse(localStorage.getItem('foozoo_app_data_v1')) || { records: {}, friendsImages: [] };
+                appData = loadLightBackupFromLocalStorage();
                 syncStateFromAppData();
                 renderSpotList();
                 renderFriendsGallery();
@@ -511,13 +545,13 @@ function renderFloatingFriends(){
         appData.records = userRecords;
         appData.friendsImages = friendsImages;
 
-        localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
-        localStorage.setItem('foozoo_records_v4', JSON.stringify(userRecords));
-
         // 先にホーム画面へ即反映
         renderSpotList();
         updateProgressBar();
         renderFloatingFriends();
+
+        // ブラウザ内には画像なしの軽量バックアップのみ
+        saveLightBackupToLocalStorage();
 
         // GAS保存は裏で実行。全画面Now loadingは出さない
         saveAppDataToGAS({ showLoading: false })
@@ -939,9 +973,9 @@ function addFriendImage(inp){
  resizeFriendImageFile(f,function(dataUrl){
    friendsImages.push(dataUrl);
    appData.friendsImages=friendsImages;
-   localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
    renderFriendsGallery();
    renderFloatingFriends();
+   saveLightBackupToLocalStorage();
    saveAppDataToGAS({ showLoading: false }).finally(()=>showLoading(false));
    inp.value='';
  });
@@ -951,9 +985,9 @@ function deleteFriendImage(i){
  if(confirm('削除しますか？')){
    friendsImages.splice(i,1);
    appData.friendsImages=friendsImages;
-   localStorage.setItem('foozoo_app_data_v1', JSON.stringify(appData));
    renderFriendsGallery();
    renderFloatingFriends();
+   saveLightBackupToLocalStorage();
    saveAppDataToGAS({ showLoading: false });
  }
 }
